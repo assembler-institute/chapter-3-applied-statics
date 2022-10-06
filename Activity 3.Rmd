@@ -1,0 +1,80 @@
+---
+title: "ACTIVITY 3"
+output:
+  html_notebook: default
+  pdf_document:
+    latex_engine: xelatex
+  html_document: default
+---
+
+## Section A
+We have the CI of a sample of 5 individuals:
+ 110
+ 100
+ 115
+ 105
+ 104
+
+We want (case 1) to calculate the confidence interval on the mean (at 95%) and (case 2) indicate whether such subjects have been drawn from a population with a mean of 100.
+
+## Section B
+Given the previously seen survey dataset, we want to test whether the difference in pulse rate between Smen and women is different or not.
+Can it be considered that the pulse of women is higher than that of men at a confidence level of 90%?
+
+## section C
+
+
+**Benford's law**
+An invoice has been sent to the Xdata company that appears to be false.
+This bill has a lot of numbers that don't seem naturally generated.
+We check if the invoice is indeed artificially generated based on Benford's Law https://es.wikipedia.org/wiki/Benford_Law
+ 
+This law deals with the distribution of the first digits in:
+- bills
+- magazine articles
+- street addresses
+- share prices
+- number of inhabitants
+- mortality rates
+- length of the rivers
+- Physical
+- mathematical constants
+- Prime numbers
+
+Benford's law states that the natural distribution of the first digits is
+
+      0.301,0.176,0.125,0.097,0.079,0.067,0.058,0.051,0.046
+
+
+The frequencies of the first digits of the company's invoices turn out to be
+
+      7, 13, 12,  9,  9, 13, 11, 10, 16
+
+Are they false invoices?
+
+
+## Section D
+
+Load the "PlantGrowth" dataset
+
+```{r}
+data("PlantGrowth")
+PlantGrowth
+```
+
+- Can it be considered that with the three treatments the plants have the same growth?
+- Do an exploratory analysis
+- Check model assumptions
+- Perform the one-way ANOVA
+- What conclusions can be inferred from this sample?
+
+##Section E
+
+Load the file "iqphys.csv", Does IQ depend on physical measurements?
+
+Data description:
+
+- Response (y)(IQ): Performance IQ (PIQ) scores from the Wechsler Adult Intelligence Scale-Revised. This variable was used by the researcher to measure the intelligence of the individual.
+- Possible predictor (x1)(Brain): The size of the brain based on the estimate obtained from the MRIs (expressed as estimate/10,000).
+- Possible predictor (x2)(Height): Height in inches.
+- Possible predictor (x3)(Weight): Weight in pounds.
