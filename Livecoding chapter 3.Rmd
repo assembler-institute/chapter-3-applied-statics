@@ -1,0 +1,1592 @@
+---
+title: "Livecoding Chapter 3"
+output:
+  html_document: default
+  html_notebook: default
+  pdf_document:
+    latex_engine: xelatex
+---
+
+
+# descriptive statistics
+
+Descriptive statistics are functions taken from a sample of a population that can be approximated by a particular probability distribution.
+
+There are infinity of possible statistics, the fundamental ones are:
+
+- **Sample mean:** is an estimator of the mathematical expectation.
+- **Sample variance and standard deviation:** approximate the variance and standard deviation.
+- **Sample quantile:** approximate the quantiles.
+- **Sample median:** is the sample quantile 0.5 that leaves half the values ​​above and half below.
+- **Sample range:** indicate the range of sample values, specifically the sample maximum and sample minimum.
+- **Sample covariance:** is taken between two variables and is an indicator of the amount of variation in one variable that is explained by the other.
+- **Sample correlation:** indicates the correlation between two vectors, which is the quantity of dependence of both normalized to the interval [-1, 1], where -1 is a perfect inversely proportional relationship and 1 a perfect directly proportional relationship.
+- **Sampling kurtosis and bias:** the kurtosis indicates how homogeneous the distribution of the data is and the bias if they are accumulated at one of the upper or lower extremes.
+  
+
+```{r}
+
+x<-c(1,2,3,4,5)
+
+y<-c(1,3,3,1,5)
+
+z<-c(1,3,3,4,4)
+
+mean(x)
+var(x)
+median(x)
+
+mean(y)
+median(y)
+
+sum(x)
+max(x)
+min(x)
+range(x)# values max and min
+cov(x,y)
+cor(x,y)
+sort(x)
+
+sort(y)
+
+rank(x)#returns the rank of each of the elements.
+
+rank(y)
+#[1] 1.5 3.5 3.5 1.5 5.0 
+#where the 1 is 2 times, so they are position 1-2 so 1.5 for each. 3 also appears 2 times, which would be position 3 and 4, that's why he assigns 3.5 to each one.
+
+order(y,decreasing=TRUE) # returns the positions of the ordered array elements
+#[1] 5 2 3 1 4
+# position 5 puts it in 1st place because it corresponds to number 5 of the vector and 2 is element 3 that is in 2nd position, etc.
+
+quantile(x) # divides the vector into 4 intervals
+
+quantile(x,c(0.1,0.5,0.9)) # modifies the intervals in which it is divided
+
+cumsum(y) # cumulative sum
+cumprod(y) # accumulated product
+
+pmax(x,y,z) # take the maximum of the respective values of the vectors
+pmin(x,y,z) # takes the minimum of the respective values of the vectors
+
+#to make these descriptors in the numeric columns of a dataframe we use sapply
+
+data("USArrests")
+head(USArrests)
+sapply(USArrests$Murder,mean)
+
+mean(USArrests$Murder)
+
+sapply(USArrests,quantile)
+
+quantile(USArrests$Murder,c(0.1,0.5,0.9))
+
+str(USArrests)
+
+```
+
+
+
+### Exercise
+
+We roll a die a number of times with the following results:
+
+`1,2,5,3,6,4,2,1,2,4,1,5,3,2,4,1,6,2,3,1,6,2,4,2,1 `
+
+- Calculate your table of absolute and relative frequencies using table and length
+
+- Draw a barplot using table, do you think the die is balanced?
+
+- Calculates centralization measures: mean, median, quantiles and dispersion: variance, standard deviation, range and interquartile range.
+
+- Calculate shape measures: skewness, kurtosis (library(fBasics))
+
+### SOLUTION:
+
+- Calculate your table of absolute and relative frequencies using table and length
+
+```{r}
+dados<-c(1,2,5,3,6,4,2,1,2,4,1,5,3,2,4,1,6,2,3,1,6,2,4,2,1)
+
+table(dados)# how many times each event appears in the experiment
+
+length(dados)
+
+table(dados)/length(dados)#over the total number of experiments, how much each event has appeared
+```
+
+- Draw a barplot using table, do you think the die is balanced?
+
+```{r}
+
+barplot(table(dados))
+
+```
+**Response:**
+
+Yes, it is balanced since the values should be around 25 * (1/6) = 4.16. As the sample increases, this trend will become clearer.
+
+- Calculates the measures of centralization: mean, median and quantiles.
+- And dispersion: variance, standard deviation, range and interquartile range.
+
+**The interquartile range** is the difference between the 3rd quartile and the 1st quartile of a distribution, that is, it is the difference between the 75% and 25% of the data distribution.
+
+```{r}
+
+mean(dados)
+quantile(dados)
+var(dados)
+sd(dados)
+range(dados)
+quantile(dados,.75) - quantile(dados,.25) # interquartile range
+
+```
+
+- Calculate shape measures: skewness, kurtosis (library(fBasics))
+
+**Asymmetry** is the measure that indicates the symmetry of the distribution of a variable with respect to the arithmetic mean, without the need to represent it graphically.
+
+```{r}
+# install.packages("fBasics")
+
+library(timeDate)
+library(timeSeries)
+library(fBasics)
+
+skewness(dados) # Asymmetry
+
+# if it is > 0 the tail of the distribution is stretched to the right for values above the mean.
+#if it is <0 it will happen the other way around, the queue will go to the left.
+#if it is 0 it is symmetric, equal number of values to the left and right of the mean.
+
+kurtosis(dados) # curtosis
+
+# if the coefficient is <0, there is less concentration of data around the mean
+# if >0, higher concentration of data around the mean
+# IF it is 0 normal distribution (the data is concentrated around the mean)
+
+```
+
+
+# Probability distributions in R
+
+A prefix is added to each function name given by R:
+
+- "d": for the density function (pdf in continuous variable) or probability mass function (pmf in discrete variable)
+- "p": for the cumulative distribution function (cdf)
+- "q": for the quantile function (qf)
+- "r": to generate random numbers according to the corresponding law
+
+We will denote the distributions by X.
+
+## Bernouilli distribution
+
+It takes the values 0 (failure) and 1 (success). The probability of success P(X=1) is the same as the parameter `p` of the distribution.
+
+It is denoted as `Bernouilli(p)`
+
+```{r}
+
+#Bernouilli distribution
+
+# We calculate the P(X=1) of a Bernoulli(0.7)
+dbinom(1, 1,0.7)
+
+# We calculate the P(X=0) of a Bernoulli(0.7)
+dbinom(0, 1,0.7)
+
+# Calculate the func. cumulative distribution(cdf) of a Bernoulli(0.7)
+pbinom(0, 1,0.7)
+pbinom(1, 1,0.7)
+
+# for the quantile or percentile function
+qbinom(0,1, 0.7)
+
+qbinom(1,1, 0.7)
+qbinom(0.3,1, 0.7)
+qbinom(0.31,1, 0.7)
+qbinom(0.5,1, 0.7)
+
+# to generate random values that follow a Bernoulli distribution
+
+rbinom(10,1, 0.7) # 10 random elements
+rbinom(1,1, 0.7) # 1 random element
+rbinom(5,1, 0.7) #5 random elements
+
+```
+
+## Binomial distribution
+
+It is denoted by `Binomial(n, p)` where `n` is the number of experiments and `p` the probability of success.
+
+```{r}
+
+# x, q: Vector of values
+# p: Vector of probabilities.
+# n: Number of observations
+# size: Number of trials (must be zero or more).
+# prob: Probability of success in each trial.
+# log, log.p: Boolean parameter, if TRUE, the probabilities p are given as log(p).
+# lower.tail: Boolean parameter, if TRUE (default), probabilities are P[X ≤ x], otherwise P[X > x].
+
+# We calculate the P(X=3) of a Binomial(10,0.5)
+dbinom(3, 10, 0.5)
+
+# We calculate the P(X=2,1,0) of a Binomial(10,0.5)
+dbinom(c(2, 1, 0), 10, 0.5)
+
+# We calculate the P(X<=2) of a Binomial(10,0.5) = cumulative density function (cdf)
+sum(dbinom(c(0, 1, 2), 10, 0.5))
+
+# which matches the function pbinom = cdf
+pbinom(2,10,0.5) # p(X<=2)
+
+# We calculate the P(X>2) of a Binomial(10,0.5) = 1-p(X<=2)
+pbinom(2,10,0.5, lower.tail=F)
+
+#Therefore, the sum of P(X<=2) + P(X>2) = 1
+pbinom(2,10,0.5) + pbinom(2,10,0.5, lower.tail=F)
+
+# cumulative probability that encompasses the entire sample space (that 0, 1,..., 10 hits come out), hence it is worth 1
+pbinom(10,10,0.5)
+
+# The values ​​of X that have a probability of occurring around 90% in a Binomial (10, 0.5)
+qbinom(c(0.90), 10, 0.5)
+
+# 7 experiments out of 10 have a probability of occurring around 90%
+
+# The values ​​of X that have a probability of occurring around 95% in a Binomial (10, 0.5)
+qbinom(c(0.95), 10, 0.5)
+
+# 2 random numbers from a Binomial (10, 0.5)
+rbinom(2,10,0.5)
+
+# 9 random numbers from a Binomial (10, 0.5)
+rbinom(9,10,0.5)
+
+# dev.off()
+# histogram of 500 random values ​​following a Binomial (10, 0.6)
+
+# Let's remember what these values ​​mean:
+# We generate 500 values, each value is the result of executing 10 Bernouilli experiments with p=0.6 and then a count is made of how many 1 has come out
+# i.e. that a value of 6 is that when executing Bernouilli's experiments 10 times, 6 values ​​1 have come out
+hist(rbinom(500,10,0.6))
+
+```
+
+### Exercise
+
+Suppose the probability of having a defective unit on an assembly line is 0.05.
+
+- If the set of finished units constitutes a set of independent tests: what is the probability that among ten units two are found to be defective?
+- and that at most two are defective?
+What is the probability that at least one is defective?
+- You want to know a dimension of how many defective units there are in 99% of cases, how much is this maximum?
+- If 10,000 units are taken, what is the expected value of defective units?
+
+
+### SOLUTION:
+
+```{r}
+# Before starting, it is recommended to create a histogram of the distribution, since visualizing the data greatly helps its interpretation
+hist(rbinom(500,10,0.05))
+
+# - what is the probability that among ten units two are defective?
+#density function
+dbinom(2,10,0.05)
+
+# - and that at most two are defective?
+#option 1
+dbinom(0,10,0.05) + dbinom(1,10,0.05) + dbinom(2,10,0.05)
+
+#option 2
+pbinom(2,10,0.05) # using the cumulative probability function
+
+# - what is the probability that at least one is defective?
+
+1-pbinom(0,10,0.05)
+
+#1-dbinom(0,10,0.05)
+
+# - You want to know how many defective units there are in 99% of cases, how much is this maximum?
+qbinom(0.99,10,0.05)
+
+# - If 10000 units are taken, what is the expected value of defective units?
+
+mean(rbinom(20000,10000,0.05)) # generate a large number of random values, e.g. 20,000, and we take the average of defective units
+
+mean(rbinom(50000,10000,0.05))
+
+```
+
+## Poisson distribution
+
+It is denoted by `Po($\lambda$)` where $\lambda$ is the rate of occurrence in the given time interval of the variable.
+
+```{r}
+# dpois(x, lambda, log = F); Returns results of the density function.
+# ppois(q, lambda, lower.tail = T, log.p = F); Returns results of the cumulative distribution function.
+# qpois(p, lambda, lower.tail = T, log.p = F); Returns results of Poisson's quantiles.
+# rpois(n, lambda); Returns a vector of random values ​​that follow a Poisson distribution.
+# With:
+# x: Vector of values ​​(positive integer values).
+# q: Vector of values
+# p: Vector of probabilities.
+# n: Numbers of random values ​​to return.
+# lambda: Vector of means (non-negative value).
+# log, log.p: Boolean parameter, if TRUE, the probabilities p are given as log(p).
+# lower.tail: Boolean parameter, if TRUE (default), probabilities are P [X ≤ x], otherwise P [X > x]
+
+# Compute P(X = 1) from a Poisson(3)
+dpois(1, 3)
+
+# Compute a vector with P(X = 1) and P(X = 8) from a Poisson(3)
+dpois(c(1,8), 3)
+
+# Compute P(X <= 3) from a Poisson(3)
+ppois(3,3)
+
+# Compute P(X > 3) from a Poisson(3)
+ppois(3, 3, lower.tail=F)
+
+1 - ppois(3,3)
+
+# Calculate the value of the random variable X, given the probability 0.985
+# In a Poisson(3) distribution, what value has a cumulative probability of 0.985?
+qpois(0.985, 3)
+
+# Indeed, we verify that the quantile function is the inverse (in practice) of the accumulated one, since
+ppois(qpois(0.985, 3),3) # returns approximately the initial probability passed to the quantile function
+
+hist(rpois(300,5))
+```
+
+
+
+### Exercise
+
+An electronics company finds that the number of components that fail before 100 hours of operation is a Poisson random variable.
+If the average number of these failures is eight,
+
+What is the probability that a component will fail in 25 hours?
+- and that no more than two components fail in 50 hours?
+What is the probability that at least ten fail in 125 hours?
+- How many hours should the client be guaranteed to last so that in 90% of cases it is fulfilled?
+
+To do this reinforcement activity, let's understand the Poisson distribution in more detail.
+
+This deepening will be based on the understanding of its lambda parameter from its mass function (pmf), which gives the probability of a specific event. Recall that lambda Posisson pmf(k) = dpois(k, lambda), therefore, dpois(k, lambda) represents the probability with which the value k occurs in a Poisson lambda distribution.
+
+- lambda is the number of times the event is expected to occur in a given time interval
+
+- This is why we will have to constantly rescale the lambda parameter according to the given time interval
+
+### SOLUTION:
+
+
+- If we consider a time interval of 100 hours, lambda will be equal to 8.
+
+- If we proceed to consider the same distribution in an interval of 25 hours (i.e. a quarter of the initial one), then the expected number of cases will be 8/4 = 2, therefore the lambda parameter of our *same* lambda distribution adjusted to this new time interval will be 2.
+
+- For an interval of 50 hours (i.e. half), lambda will be equal to 8/2 = 4, and finally, for 125 hours (125/100 = 1.25), we will have a lambda of 8 * 1.25 = 10.
+
+
+
+
+```{r}
+
+# Before starting, it is recommended to create a histogram of the distribution, since visualizing the data greatly helps its interpretation
+hist(rpois(5000,8)) # considering time intervals of 100 hours
+
+# what is the probability that a component will fail in 25 hours?
+# lambda = 8 * 0.25 = 2
+dpois(1,2)
+
+# What if no more than two components fail in 50 hours?
+# lambda = 8 * 0.5 = 4
+ppois(2,4)
+
+# what is the probability that at least ten will fail in 125 hours?
+# lambda = 8 * 1.25 = 10 (apply rule of 3, if lambda is 8 for 100, for 125 hours it is x, being x=10)
+ppois(9.9,10,lower.tail = T)
+
+ppois(10,10,lower.tail = T)
+
+
+# How many hours should the client be guaranteed to last so that in 90% of cases it is fulfilled?
+
+#We apply an exponential distribution that studies the time that elapses between the appearance of two Poisson events.
+
+# 8/100 is the number of failures per time unit (i.e. per hour in this case)
+qexp(0.9,8/100)
+
+```
+
+## Normal distribution
+
+It is denoted by `N($\mu$, $\sigma$)` where $\mu$ is the mean and $\sigma$ is the standard deviation (square root of the variance) of the distribution.
+
+```{r}
+
+# dnorm(x, mean = 0, sd = 1, log = F); Returns results of the density function.
+# pnorm(q, mean = 0, sd = 1, lower.tail = T, log.p = F); Returns results of the distribution function
+# accumulated.
+# qnorm(p, mean = 0, sd = 1, lower.tail = T, log.p = F); Returns results of the quantiles of the Normal.
+# rnorm(n, mean = 0, sd = 1); Returns a vector of random normal values.
+# With:
+# x, q: Vector of values
+# p: Vector of probabilities.
+# n: Number of observations.
+# mean: Vector of means. By default, its value is 0.
+# sd: Standard deviation vector. By default, its value is 1.
+# log, log.p: Boolean parameter, if TRUE, probabilities p are returned as log(p).
+# lower.tail: Boolean parameter, if TRUE (default), probabilities are P [X ≤ x], otherwise P [X > x].
+
+# Calculate the P(Z>1) of an N(0,1)
+pnorm(1, mean = 0, sd = 1, lower.tail = F)
+
+# Calculate the P(-2<Z<2) of a N(0,1) = P(Z<2)-P(Z<-2)
+#distribution function
+pnorm(c(2), mean = 0, sd = 1) - pnorm(c(-2), mean = 0, sd = 1)
+
+# Calculate the P(0<Z<1.96) of an N(0,1)
+pnorm(1.96, mean = 0, sd = 1) - pnorm(0, mean = 0, sd = 1)
+
+# Calculate the P(Z<=z)=0.5793 of an N(0,1)
+qnorm(0.5793, mean = 0, sd = 1)
+
+# Calculate the P(Z>150) of a Normal with mean 125 and standard deviation 50.
+pnorm(150, mean = 125, sd = 50, lower.tail = F)
+
+# Histogram generated by 5000 random values ​​of a normal of mean 3 and standard deviation 2
+hist(rnorm(5000,3,2))
+```
+
+## Exponential Distribution
+
+
+It is denoted by `Exponential($\lambda$)` where $\lambda$ denotes the same Poisson rate between events whose intermediate times the distribution measures.
+
+That is, given a Poisson distribution ($\lambda$), the exponential studies the times between Poisson events.
+
+We work with `Exponential(2)` simulating that it is the duration of a machine running until it breaks down.
+
+```{r}
+# Histogram generated by 5000 random values ​​of a lambda 2 exponential
+hist(rexp(5000,2))
+
+#negative values ​​have density 0
+dexp(-4, 2)
+
+#positive values ​​have decreasing densities
+dexp(1, 2)
+dexp(5, 2)
+
+#su cdf, we see that it is growing
+pexp(1, 2)
+pexp(3, 2)
+
+#su qf, we find out how long the machine lasts more than 90% of the machines
+qexp(0.9, 2)
+
+#we simulate the duration of 7 machines
+rexp(7, 2)
+
+# calculate the mean and variance of a simulation with 100 machines
+#observe that the mean approaches 0.5
+mean(rexp(100, 2))
+var(rexp(100,2))
+
+```
+
+### Exercise
+
+A technical roadside assistance service has verified that on weekend mornings the number of calls it receives, on average, is 3 calls per hour. An operator begins his day on Saturday at 8 in the morning. Assuming that the calls are made independently and at a constant rate:
+- What is the probability that he receives the first call before 8:15?
+-What is the probability that he receives 4 calls in the first two hours of his workday?
+- If he has not received any call for 10 minutes, what is the probability that he will receive a new call in less than 15 minutes?
+
+
+To carry out this activity, we remember the deepening that we made of the concept of the lambda parameter in the activity related to the Poisson distribution:
+
+- lambda is the number of times the event is expected to occur in a given time interval
+
+- We will have to be constantly rescaling the lambda parameter according to the given time interval
+
+### SOLUTION:
+
+Let us apply these concepts in the particular case of this activity.
+
+- The lambda rate is 3 every hour. If we consider 1 minute (i.e. 1/60 hours) as a time interval, then our lambda = 3/60 = 0.05 and, since we are asked for 15 minutes, we will take x = 15 (bear in mind that we are not now measuring the number of events of Poisson but the time that elapses between the appearance of these).
+  - The cumulative probability function must be used (this models that the first call is before minute 1, 2...)
+
+- In the second question, the focus is on the number of events, so we use Poisson
+
+- For the third question the approach is the same, but we do not want it to be during the first 15 minutes, that is why we subtract the accumulated probability of the first 15 minutes
+
+```{r}
+# Before starting, it is recommended to create a histogram of the distribution, since visualizing the data greatly helps its interpretation
+hist(rexp(5000,0.05)) # use 1 minute as time interval
+hist(rexp(5000,3)) # we use 1 hour as the time interval (we see that they are the same graphs but with the X axis in minutes or hours), look for example for 0.5 hours or 30 minutes, it is the same value
+
+#What is the probability that the first call will be received before 8:15?
+# 1 minute time interval --> lambda = 3 *(1/60) = 0.05
+# we consider 15 minutes from the start of your shift at 8
+pexp(15,0.05)
+
+#What is the probability that you will receive 4 calls in the first two hours of your work day?
+# 2 hour time interval --> lambda = 3 * 2 = 6
+# consider 4 events
+dpois(4, 6)
+
+#If he has not received any calls for 10 minutes (since 8:15 + 10 min, 25 min from the start of the shift), what is the probability that he will receive a new call in less than 15 minutes?
+pexp(25,0.05) - pexp(15,0.05)
+
+
+
+```
+- For the third question the approach is the same, but we do not want it to be during the first 15 minutes, that is why we subtract the accumulated probability of the first 15 minutes
+
+
+### Exercise
+
+- Generate a sequence of 50 coin tosses (0 or 1)
+- A "run" is a sequence of consecutive ones or consecutive zeros. What is the longest run in the generated sequence?
+- Generate an application that calculates this value given a vector with 50 zeros and ones.
+- Simulates a thousand experiments with 50 coin tosses each and approximates the value of the probabilities of each of the lengths using Laplace's rule. Represents the histogram of the probabilities.
+- Obtain an approximation of the mean value of the longest run in the sequence.
+
+Before starting the exercise we will introduce the *Laplace rule*
+
+- Laplace's rule states that if all the results of an experiment are equiprobable, then the probability of an event A is:
+$P(A) = \frac{\text{Cases favorable to A}}{\text{Total possible cases}}$
+
+- Example: Throwing a die, the probability of getting the values ​​5 or 6 is 2/6 = 0.33 since:
+  - Cases favorable to A: values ​​5, 6
+  - Total possible cases: values ​​1, 2, 3, 4, 5, 6
+
+### SOLUTION:
+
+```{r}
+# - Generates a sequence of 50 coin tosses (0 or 1)
+run <-rbinom(50,1,0.5)
+
+# - A "run" is a sequence of trailing ones or trailing zeros. What is the longest run in the generated sequence?
+# - Generate an application that calculates this value given a vector with 50 zeros and ones.
+
+max_carrera=0
+c=0
+
+for (i in 1:length(carrera)){
+  if (carrera[i]==1){
+    c = c+1
+  }else{c=0}
+  max_carrera=max(c(c,max_carrera))
+}
+
+max_carrera
+
+# - Simulate a thousand experiments with 50 coin tosses each and approximate the value of the probabilities of each of the lengths using Laplace's rule. Represents the histogram of the probabilities.
+
+
+# We implement a function that, given a number of throws, generates a sequence and calculates its maximum run
+
+experimento <- function(n_lanzamientos){
+  carrera <- rbinom(n_lanzamientos,1,0.5)
+  for (i in 1:length(carrera)){
+    if (carrera[i]==1){
+      c = c+1
+    }else{c=0}
+    max_carrera=max(c(c,max_carrera))
+  }
+  return(max_carrera)
+}
+
+experimento(50) # replicates what was done in the previous section, but this time through a function
+
+simula <- function(n_experimentos,n_lanzamientos){
+  resultados <- c()
+  for (i in 1:n_experimentos){
+  resultados <-append(resultados,experimento(n_lanzamientos))}
+  return(list(resultados=resultados,media=mean(resultados)))
+}
+
+simulaMil <- simula(1000,50)
+simulaMil
+
+
+# We calculate histogram of each of the values (count of how many times each one appears)
+hist(simulaMil$resultados)
+
+# We apply Laplace's rule to obtain an approximation of the probabilities of each value
+
+# absolute frequency table
+table(simulaMil$resultados)
+
+# relative frequency table (i.e. we apply Laplace's rule, we divide the number of observations of the value by the total number of observations)
+# thus obtain an approximation of the probabilities of each value
+table(simulaMil$resultados)/length(simulaMil$resultados)
+
+# - Obtain an approximation of the mean value of the longest run in the sequence.
+simulaMil$media
+```
+
+
+# Example of statistical inference: The Knight of Meré
+
+To understand what the point estimate consists of, we propose to solve an example
+classic: Mèré's paradox. Although it is not clear how much truth there is in the story, it is
+believes that the Knight of Mèré was very fond of the game and that, based on his own
+experience of his, he proposed the following wager:
+
+      De Mèré wins if at least 6 is rolled 4 times
+    
+-------------------------------------------------- ----------
+
+1. Do you think it was a “profitable” game for the Knight of Mèré?
+2. How would you estimate the probability of winning the game?
+3. How would you generate a sample?
+4. What is the sampling distribution of the estimator?
+5. Would you know how to calculate the probability of winning the game?
+
+The first thing we must take into account is that we are facing a parametric inference problem.
+The unknown parameter p is "the probability of winning the game"
+
+To do this we will simulate and create an estimator of that value, which will be:
+
+      p_hat = "number of games won" / "total number of games"
+      
+      
+Before we begin, let's clarify two fundamental concepts covered in this notebook, point estimation and the central limit theorem.
+      
+*Point estimate*: It is a technique used to infer parameters of a total population. Given a population from which you want to obtain a parameter, e.g. population mean, a sample is taken from it and the same parameter is calculated on the sample, e.g. sample mean. Point estimation consists of estimating the population mean as the sample mean.
+
+- As opposed to point estimation, there is estimation with confidence intervals, in which the population estimate from the sample statistic is carried out by giving a confidence interval around the sample statistic. Example: the population parameter inference would be (sample statistic - $\alpha$/2, sample statistic + $\alpha$/2)
+
+*Central limit theorem*: The sum of n random and independent variables of mean $\mu$ and variance $\sigma^{2}$, with the same distribution, behaves, when n is large enough, to a normal N of mean $n\mu$ and variance $n\sigma^{2}$.
+
+- Another formulation of this theorem is: The mean of n random and independent variables of mean $\mu$ and variance $\sigma^{2}$, with the same distribution, behaves, when n is large enough, to a normal N of mean $\mu$ and variance $\frac{\sigma^{2}}{n}$.
+- Typically n is considered large enough when it is greater than 30.
+
+
+----------------------------------------------------------------------------------------
+
+```{r}
+
+n.veces=4 # nº de tiradas
+partidas=1000 #partidas=tamaño muestral 
+# each game roll the dice 4 times
+
+
+dados=matrix(sample(1:6,n.veces*partidas,T),nc=n.veces) 
+
+head(dados)
+# generates a 1000 * 4 matrix showing the results of all 1000 games for that sample
+
+
+ganadas=sum(apply(dados==6,1,sum)>=1) # count of games won for that sample
+
+ganadas # if a 6 m comes up, he has won this game of 4 rolls and is adding it up
+# has appeared at least a 6 in 529 games
+
+prob.est=ganadas/partidas # the probability of winning in that sample is saved
+prob.est
+#0.529
+
+```
+
+The statistic that is generated on a sample is based on the central limit theorem and is of the form
+
+$\hat{p} \sim N(p,\sqrt{p(1-p)/n})$
+
+so that
+
+$\frac{\hat{p}-p}{\sqrt{\hat{p}(1-\hat{p})/n}} \sim N(0,1)$
+
+where $\hat{p}$ is our sample statistic and $p$ is the probability value we want to estimate
+
+
+```{r}
+
+n.veces=4
+partidas=1000 #partidas=tamaño muestral
+n.muestras<-100 #100 samples from 100 games with 4 dice rolls
+prob.est<-numeric()
+for (i in 1:n.muestras){ # se toman n.muestras
+  dados=matrix(sample(1:6,n.veces*partidas,T),nc=n.veces) 
+  # generates a 1000 * 4 matrix showing the results of all 1000 games for that sample
+  ganadas=sum(apply(dados==6,1,sum)>=1) # count of games won for that sample
+  prob.est[i]=ganadas/partidas} # the probability of winning in that sample is saved
+
+prob.est
+# gives us pa probability of winning in each sample with 1000 games and 4 dice rolls in each of them
+
+plot(density(prob.est))
+# a density graph is made based on the 100 samples studied (similar to a histogram)
+
+```
+
+
+In this case we know the real probability thanks to the following argument.
+
+- The probability of getting at least a 6 in four throws is the same as the complementary probability of getting a 1, or a 2, ... , or a 5 in the four throws.
+
+- The probability of rolling a 1, or a 2, ... , or a 5 in all four rolls is $(\frac{5}{6})^4$
+
+-- which is the same as saying that the probability of getting 1 or 2 or 3 or 4 or 5 is 1/6 + 1/6 + 1/6 + 1/6 + 1/6 = 5/6 in 1 spin
+
+--- because in 4 spins it is (5/6)x(5/6)x(5/6)x(5/6) = (5/6)^4
+
+- Therefore, the probability of rolling at least a 6 in four rolls is $1 - (\frac{5}{6})^4 = 1 - \frac{625}{1296}$
+
+Let's therefore plot the real distribution against the estimated one obtained by simulation:
+
+
+```{r}
+
+p=1-625/1296
+desv=sqrt(p*(1-p)/partidas)
+x=seq(-0.6,0.6,length=1000)
+
+
+plot(density(prob.est))+lines(x,dnorm(x,mean=p,sd=desv),col=2)
+
+# Being the red line the real distribution vs the black line that is the one estimated by the simulation (see the previous graph of only the estimated one)
+
+```
+
+The estimate of p given by the sample is
+
+```{r}
+
+p_hat <- mean(prob.est)
+p_hat
+p
+```
+The 95% confidence interval for the probability is:
+
+For the moment we have obtained a point estimate, we now proceed to calculate an estimate with confidence intervals.
+
+We want to calculate a 95% confidence interval, i.e. we leave 2.5% out for each tail of the distribution.
+To get this interval we are going to subtract/add the value corresponding to the 97.5th percentile, since by definition it leaves 97.5% of the values to its left (leaving 2.5% to its right, which is what we want). We will multiply it by the standard deviation to transfer it to the normal with said deviation (by default the deviation from the normal is 1).
+
+```{r}
+
+c(p_hat- qnorm(0.975) * desv, p_hat + qnorm(0.975) * desv)
+
+```
+With the experiments we have carried out, we cannot be sure if the game is successful since the 95% confidence interval includes values below 0.5
+
+# Confidence intervals, hypothesis tests and statistical power analysis
+
+## Fundamental distributions for creating confidence intervals: Normal, chi-square, Student's t, and Snedecor's F distributions
+
+- Normal-> rnorm, dnorm, pnorm, qnorm
+
+- X^2-> rchisq, dchisq, pchisq, qchisq
+
+-t-Student ->rt, dt, pt, qt
+
+- F-Snedecor -> rf, df, pf, q
+
+```{r}
+
+x <- seq(-10,10,length=1000)
+# sequence of 1000 elements between -10 to 10 (you can see that they appear in order with the first element being -10 and the last 10)
+
+y_norm <- dnorm(x=x, mean=0, sd=1)
+# density function for the 1000 elements with a normal(0,1)
+
+plot(x,y_norm, type="l", main = "Main statistical distributions", xlab = "x", ylab="density function", xlim = c(-10,10), ylim = c(0, 0.68) , col="red")
+
+#Chi square with 3 degrees of freedom
+y_chi <- dchisq(x=x, df = 3)
+
+plot(x,y_norm, type="l", main = "Principales distribuciones estadísticas", xlab = "x", ylab="función de densidad", xlim = c(-10,10), ylim = c(0, 0.68) , col="red")+
+lines(x, y_chi, col = "green")
+
+
+
+y_t <- dt(x=x,df = 3)
+
+plot(x,y_norm, type="l", main = "Principales distribuciones estadísticas", xlab = "x", ylab="función de densidad", xlim = c(-10,10), ylim = c(0, 0.68) , col="red")+
+lines(x, y_t, col = "blue")
+
+
+y_f <- df(x=x, df1 = 3, df2 = 3)
+
+plot(x,y_norm, type="l", main = "Principales distribuciones estadísticas", xlab = "x", ylab="función de densidad", xlim = c(-10,10), ylim = c(0, 0.68) , col="red")+
+lines(x, y_f, col = "purple")
+
+
+# All distributions will be represented.
+
+plot(x,y_norm, type="l", main = "Principales distribuciones estadísticas", xlab = "x", ylab="función de densidad", xlim = c(-10,10), ylim = c(0, 0.68) , col="red")+lines(x, y_chi, col = "green")+lines(x, y_t, col = "blue")+lines(x, y_f, col = "purple")
+
+
+```
+
+
+## Application of different statistical tests
+
+### Testing hypotheses about the mean in samples
+
+#### Contrast on the mean for a sample
+
+Next, we will use the Student's t-test seen in class to contrast the mean of the sample.
+
+We load length data of lizards
+
+
+```{r}
+lizard <- c(6.2, 6.6, 7.1, 7.4, 7.6, 7.9,
+            8, 8.3, 8.4, 8.5, 8.6,
+           + 8.8, 8.8, 9.1, 9.2, 
+           9.4, 9.4, 9.7, 9.9, 10.2, 10.4, 10.8,
+           + 11.3, 11.9)
+hist(lizard)
+
+```
+
+
+*What do we want to contrast?*
+
+We want to know if the mean of the lizards is zero.
+Therefore, the hypothesis test is formalized as:
+
+- Null hypothesis: mu=0
+- Alternative hypothesis: mu<>0
+
+
+```{r}
+
+t.test(lizard)
+
+```
+
+Using the Student's t-test with the command, we obtain a very small p-value.
+p-value <0.05
+p-value = 2.2e-16 < 0.05
+Consequently, the null hypothesis that the mean is 0 is rejected.
+(Accepting H1, the mean is different from zero)
+
+It also gives us a confidence interval at 9%5 on the parameter of the sample mean.
+
+95 percent confidence interval:
+  8.292017 9.499649
+
+
+We can modify the confidence level:
+
+```{r}
+
+t.test(lizard, conf.level = 0.9) #modificamos nivel de confianza a 0.9
+
+```
+The CI is bounded on both sides being narrower than the previous 95%
+
+90 percent confidence interval:
+  8.395575 9.396092
+
+Since the p-value is less than 0.05, it is concluded to reject the null hypothesis H0
+
+If we want to focus on the hypothesis test we can do it bilaterally or unilaterally, that is, with equality or inequalities > or < in the null hypothesis
+
+```{r}
+
+t.test(lizard, mu=8.4,conf.level = 0.9) #bilateral con 8.4 90% y H1: mu!=8.4 H0=8.4
+
+#alternative=greater -- greater than
+t.test(lizard, mu=8.4,alternative = "g" ,conf.level = 0.9) #unilateral H1: mu>8.4
+
+#alternative=less -- less than
+t.test(lizard, mu=8.4,alternative = "l" ,conf.level = 0.9) #unilateral H1: mu<8.4
+```
+In this case, the p-values are greater than 0.05, therefore we could not consider the mean to be different from 8.4, neither higher nor lower.
+
+We see the attributes of the `t.test`
+
+```{r}
+
+#analyze the attributes of the bilateral contrast
+
+a <- t.test(lizard, mu=8.4,conf.level = 0.9) 
+
+a
+
+#confidence interval
+a$conf.int
+
+# p-valor
+a$p.value
+
+#statistic - valor de la t
+a$statistic
+
+```
+
+
+
+#### Hypothesis test for the difference of means of two normal samples
+
+In this case we are going to perform a contrast on the means of two normal samples.
+
+- H0: mu_x - mu_y >= 0
+- H1: mu_x-mu_y < 0
+
+In the first case we are going to assume that the samples, although they are normal and independent, have a different variance. That is why we will use the Welch test.
+
+```{r}
+
+x <- rnorm(200,3,2)
+
+y <- rnorm(200,4,1)
+
+# we put what appears in H1, in this case that mu_x-mu_y < 0 - less
+# Welch's test is applied with the t-student test and selecting the 2 samples
+
+t.test(x,y,alternative = "l")
+
+```
+Since the p value is very small, we accept the alternative hypothesis H1: mu_x-mu_y < 0,
+that is, we reject the null hypothesis H0
+
+
+In the second case we are going to assume normal, independent samples with the same variance. That is why we can use the t-Student test for two samples.
+
+```{r}
+x <- rnorm(200,3,2)
+y <- rnorm(200,2,2)
+
+# parameter var.equal=TRUE is because we are assuming that the 2 samples have the same variance and therefore we can use t student.
+
+t.test(x,y,alternative = "l",var.equal = TRUE )
+
+```
+
+Since the p value is equal to 1 and is greater than alpha, we accept the null hypothesis H0:
+mu_x - mu_y >= 0
+
+### Contrast of hypotheses and techniques to detect normality
+
+To make the tests rigorously, we must ensure that the distribution is approximated by a Normal. For this we have the following contrasts.
+
+In this first case we generate data from an exponential.
+We observe its p-value by means of the shapiro test and we will represent a Q-Q graph to see if our data fit the line.
+
+In the Shapiro test we have the following contrast:
+
+H0= is a normal
+H1= not a normal
+
+```{r}
+
+muestra <- rexp(500,10)
+
+plot(density(muestra))
+
+shapiro.test(muestra)
+
+qqnorm(muestra)
+qqline(muestra)
+```
+
+Since the p-value is <0.05, we reject H0, and accept H1, that is, it is not a normal.
+
+By means of the shapiro contrast we obtain the p-value and it determines that it is not normal, in turn we see in a qqplot that the points are not on the line, this means that the quantiles are not distributed as in a normal one.
+
+
+Another example, we consider a sample that follows a normal(4,2).
+Let's observe, through the shapiro test and the QQ graph, if it is a normal or not.
+
+H0= is a normal
+H1= not a normal
+
+
+```{r}
+
+muestra <- rnorm(4999,4,2)
+
+plot(density(muestra))
+
+shapiro.test(muestra)
+
+qqnorm(muestra)
+qqline(muestra)
+```
+
+In this second case, considering a sample that follows a normal distribution, we observe a p-value that indicates that it is normal ( > 0.05, we accept H0) and a fit to the line in the QQ graph.
+
+
+### Hypothesis tests and techniques to detect if two samples come from the same distribution
+
+The Kolmogorov-Smirnov test is a non-parametric test used to check whether two samples come from the same distribution.
+It is highlighted that although it could be used to detect the normality of a sample, the use of tests such as Shapiro is recommended for this purpose.
+As discussed in the notes, qqplots also allow us to know if two different samples come from the same distribution.
+
+```{r}
+
+muestra <- rnorm(4999,4,2)
+
+muestra2 <- runif(500,0,200)
+
+ks.test(muestra,muestra2)
+
+qqplot(muestra,muestra2)
+qqline(muestra)
+```
+
+We can see that our samples do not fit the line of the QQ plot.
+Therefore, these two samples do not come from the same distribution.
+
+
+
+### Hypothesis tests detect if two samples have the same variance
+
+To find out if two samples come from a population in which the equality of variances can be assumed (the squared deviations with respect to the mean are equal), the F test for equality of variances can be used.
+It is emphasized that this test is extremely sensitive to the normality of the data.
+
+```{r}
+
+x <- rnorm(100,3,1)
+
+y <- rnorm(100,8,1.2)
+
+var.test(x,y)
+
+```
+
+In this case, since the p value is less than alpha (p-value < 0.05), the null hypothesis that both normal samples have similar variance is accepted.
+
+
+### Confidence interval for proportions:
+
+We see if we can consider that there is the same proportion of men as women in a survey
+
+```{r}
+
+library(MASS)   
+
+
+help(survey)
+
+head(survey)
+summary(survey) #we have a missing in the Sex variable
+
+#Create a variable without missing values from the Sex variable of the survey dataset
+gender.response <- na.omit(survey$Sex)
+gender.response
+
+# sample size
+n <- length(gender.response)
+
+# of women in the sample
+k <- sum(gender.response == "Female") 
+k
+n
+
+prop.test(k, n) 
+
+```
+Since the p value is greater than alpha, the null hypothesis H0 is considered: men and women are in the same proportion. (That is, H0 is accepted)
+
+Confidence interval for the proportion of men:
+
+```{r}
+
+prop.test(k,n)$conf.int
+
+```
+
+
+
+## Statistical power analysis
+
+Statistical power analysis relates the experiment to statistical power through two lines of study.
+
+An analysis of the statistical power aided by the Student's t-distribution is shown below.
+This technique requires normality in the samples and that they are independent.
+
+- The first line of study is, given some statistical characteristics of the experiment such as alpha, pi or the mean of the samples to be considered, what should be the sample size N of these samples to obtain these values?
+
+ Suppose we want to carry out a study with laboratory mice in which we want to investigate the relationship between food, for which we prepare two types A and B, and the weight of the mouse. After conducting our study, we expect the mean weight of the mice fed A to be 25 grams, while fed B is 22 grams. In addition we want a significance of 0.05 and a statistical power of 0.80.
+ 
+ Next, we will perform a statistical power analysis based on the Student's t-distribution that will tell us the sample size of each of the samples. 
+
+ 
+```{r}
+power.t.test(delta = (25-22), # diferencia entre las medias esperadas
+             power = 0.80, # poder estadístico deseado
+             sig.level = 0.05, # nivel de significación deseado
+             type = "two.sample", # tipo de test
+             alternative = "two.sided" 
+             )
+```
+
+As a result of the analysis, we see that N = 3, so the experiment should have 3 mice eating type A and 3 mice eating type B.
+
+- The second line of study is the inverse question, given some statistical characteristics, which do not include pi, and the sample size N, what statistical power will the experiment have?
+
+Continuing with the example of the mice, suppose that the experiment is going to be carried out with a sample of 5 mice per sample (10 mice in total), keeping the rest of the previously specified parameters at the same values except for the statistical power.
+
+Next, we will perform the statistical power analysis to show us the expected statistical power in this experiment.
+
+
+```{r}
+
+power.t.test(n = 5, # número de observaciones por grupo
+             delta = (25-22), # diferencia entre las medias esperadas
+             sig.level = 0.05, # nivel de significación deseado
+             type = "two.sample", # tipo de test
+             alternative = "two.sided" 
+             )
+```
+
+As a result of the analysis, we see that the expected statistical power is 0.98.
+
+
+# Nonparametric tests
+ 
+Nonparametric inference is performed when we do not know the probability distribution.
+
+The value of non-parametric tests is highlighted since, when one wants to compare two independent random samples, in the event that there is a sufficient number of samples, normality can be assumed thanks to the central limit theorem and parametric methods applied, but when the samples are small and normality cannot be assumed, this is when non-parametric tests take on parametric importance.
+
+
+## Chi square tests
+
+The chi square test measures the discrepancy between the observed distribution of a variable, whether continuous or discrete, and a theoretical reference. The null hypothesis will always be that the observed distribution follows the theoretical reference one.
+
+**H0: the observed distribution follows the theoretical reference distribution.**
+
+How the theoretical distribution is arrived at and its application context will determine its usefulness.
+
+### Chi-square goodness-of-fit test
+
+We see if a sample of a categorical variable can be considered to fit an ideal distribution, H1 means that the fit is not adequate.
+
+To apply the chi-square goodness-of-fit test, a theoretical distribution is needed.
+The frequencies of said theoretical distribution can be provided implicitly with the values ​​of the theoretical probability (as explained in the teaching unit).
+
+
+```{r}
+
+x <- c(89,37,30,28,8) # x is treated as a one-dimensional contingency table - these are the theoretical frequencies
+
+p <- c(0.1,0.2,0.1,0.2,0.4) #associated theoretical probabilities
+N <- sum(x)
+
+N
+
+chisq.test(x,p = p)
+
+```
+
+In this case, since the p-value is less than 0.05, the null hypothesis that the observed distribution follows the theoretical one is rejected, that is, the fit is not adequate.
+
+
+### Chi square test for homogeneity
+
+It tests if several samples can come from the same distribution.
+
+The null hypothesis to be tested is that the distribution in one sample is equal to the distribution in the other.
+
+H0: the distribution of both samples is the same
+
+This means that the probabilities of the values of a variable in one sample will be the same as in the other sample.
+
+```{r}
+
+A <- sample(1:4,  #Nº of factors
+            500,  #muestral size
+            p=c(1/4,1/4,1/4,1/4), #Probability of each class (in this case it is a discrete uniform)
+            replace = TRUE)
+A
+
+B = sample(1:4,  #Nº of factors
+           500,  #muestral size
+           p=c(1/4,1/16,3/16,1/2), #Probability of each class
+           replace = TRUE)
+B
+
+AB<- rbind(table(A),table(B))
+
+AB
+
+
+```
+```{r}
+
+chisq.test(AB)
+
+```
+
+
+Since the p-value is less than 0.05, the null hypothesis H0 that the distribution in one sample is equal to the distribution in the other is rejected, therefore the alternative hypothesis H1 is accepted: the distributions of the samples are significantly different .
+
+
+### Chi-square test of independence
+
+It is a test that indicates whether two variables extracted from a sample are independent or not.
+We understand being independent as the result of one variable does not influence the value of the other. As an example: we want to see if weight is independent of height in a human being.
+
+- Example 1
+
+In this case we see if the variable "car class" is independent of "manufacturer".
+
+```{r}
+
+libs <- c("ggplot2", "plyr")
+
+lapply(libs, require, character.only = T)
+
+data(mpg)
+head(mpg)
+tbl <- table(mpg$class, mpg$manufacturer) 
+
+tbl     #contingency table between the variables type car and brand
+
+
+```
+
+
+
+```{r}
+
+chisq.test(tbl) 
+
+# we note that the chi square test warns that its calculations may not be correct
+# this is due to the large number of empty positions in the contingency table (zero values), higher observed frequencies are needed
+
+```
+
+
+we conclude that they are dependent since the H0 is to be independent and the p-value is less than 0.05, so the null hypothesis is rejected and the alternative hypothesis is accepted.
+
+
+
+
+- Example 2
+
+In this case we see if the variable "motor type" is independent of "being automatic or manual".
+
+
+```{r}
+
+library(MASS)
+
+data("mtcars")
+head(mtcars)
+
+tbl <- table(mtcars$vs, mtcars$am) 
+tbl     #contingency table
+
+
+chisq.test(tbl)
+
+```
+
+It is concluded that the variables type of engine and being automatic or manual are independent, that is, we accept H0 for having a p-value greater than 0.05.
+
+
+## Do random samples follow the same distribution?
+
+### Mann-Whitney and Kruskal-Willis for continuous and independent distributions
+
+The Mann-Whitney U test is used to test the null hypothesis that two random and independent samples on continuous variables come from the same population.
+This test is also called the Mann Whitney Wilcoxon test or the Wilcoxon rank sum test.
+
+We are going to study if the expense within the automatic and within the manuals follows the same distribution.
+
+We will use the Mann Whitney Wilcoxon test because we are going to use it on the expense variable (continuous and ordered)
+
+```{r}
+
+library(MASS)
+data("mtcars")
+head(mtcars)
+mtcars$mpg #gasto
+mtcars$am #automático o manual
+
+
+wilcox.test(mpg ~ am, data=mtcars) 
+
+```
+Since the p-value is less than 0.05, the null hypothesis that they follow the same distribution is rejected.
+Therefore, it is obtained that they are different distributions
+
+
+
+This test has an extension to compare three or more groups, called the Kruskal-Wallis test.
+
+We want to test if the expenditure depending on whether it has 3,4 or 5 gears (variable gear) follows the same distribution.
+We will take 3 samples from the gear variable.
+
+```{r}
+
+# has three classes according to the number of gears
+unique(mtcars$gear)
+
+#as is numeric
+class(mtcars$gear)
+
+# we generate a factor variable that helps us to separate the samples
+mtcars$gearFactor <- as.factor(mtcars$gear)
+
+
+# 3, 4 and 5 gears are independent
+# Let's see if the expense depending on whether it has 3, 4 or 5 macrhas follows the same distribution
+
+kruskal.test(mpg ~ gearFactor, data=mtcars)
+
+```
+
+Since the p-value is less than 0.05, the null hypothesis that they follow the same distribution is rejected.
+Therefore, it is obtained that they are different distributions.
+
+
+### Wilcoxon signed ranks test for dependent distributions
+
+This test is used to determine if two samples of dependent populations come from populations with the same distribution.
+
+Example:
+we want to test whether the sample from field 1 and the sample from field 2 follow the same distribution.
+
+The dataset presented here shows the growth of five varieties of barley in six different locations.
+
+Field Y1 shows the growth in 1931 and field Y2 shows the growth in 1932.
+While the growth of a year depends on the previous years, the samples obtained by differentiating by years can be considered dependent a priori.
+
+```{r}
+
+help(immer)
+
+head(immer)
+
+help(wilcox.test)
+  
+wilcox.test(immer$Y1, immer$Y2, paired=TRUE) # paired if you want a paired test
+
+```
+
+ 
+But after applying the Wilcoxon test:
+Since the p value is less than 0.05, the null hypothesis that they come from populations with the same distribution is rejected.
+
+# ANOVA
+
+We load data
+
+```{r}
+
+url <- "http://www.statsci.org/data/general/flicker.txt"
+
+
+flicker2 <- read.csv(url,sep="\t")
+
+head(flicker2)
+
+
+
+#write.csv(flicker,"flicker.csv")
+
+```
+
+We have eye color which is a discrete variable with three possible values blue, brown and green and we want to know its influence on the numerical variable Flicker:
+
+```{r}
+
+is.factor(flicker2$Colour)
+
+levels(flicker2$Colour)
+
+unclass(flicker2$Colour)
+
+```
+
+Before performing the one-way ANOVA test, we performed a small exploratory analysis of the data to observe the differences in the means.
+
+
+
+```{r}
+
+
+boxplot(data=flicker2,Flicker ~ Colour, ylab = "Flicker")
+
+stripchart(data=flicker2,Flicker ~ Colour, vertical=TRUE)
+
+```
+It can be seen that the mean of the "Flicker" variable does vary according to the color of the eye.
+
+Finally, we apply a one-way ANOVA test to determine if they are equal.
+
+We did it in its two variants, assuming equality and difference of variances in the samples.
+
+
+```{r}
+
+ #test asumiendo varianzas distintas concluye que no tienen medias iguales
+oneway.test(data=flicker2,Flicker ~ Colour)
+
+oneway.test(flicker2$Flicker ~ flicker2$Colour)
+
+
+#test assuming equal variances concludes that they do not have equal means
+
+oneway.test(flicker2$Flicker ~ flicker2$Colour, var.equal=TRUE) 
+
+
+oneway.test(data=flicker2,Flicker ~ Colour,var.equal=TRUE)
+
+str(flicker2)
+
+```
+
+With the two variants, a p-value less than 0.05 is obtained, so the null hypothesis H0 of equality of means throughout the samples is rejected, and the alternative hypothesis H1 that the means of the samples vary is accepted.
+
+
+# Correlation analysis
+
+Let's see an illustrative example of the functions used for correlation analysis and how they are analyzed.
+
+We load the dataset of cars and observe the correlation of consumption "mpg" with respect to the first variables, in corr we have the correlation coefficient R:
+
+
+```{r}
+
+data(mtcars)
+head(mtcars)
+
+str(mtcars)
+
+# install.packages("GGally")
+
+library(ggplot2)
+library(GGally)#te pide cargar antes la libreria ggplot2
+
+help(ggpairs)
+
+ggpairs(mtcars[,1:5])
+#It returns a matrix of graphs of the 5 chosen variables (in pairs) with their correlation
+
+```
+**Which variables would we say, according to the previous matrix, that are correlated and which are not?**
+
+Response:
+ 
+no correlation of drap with hp with a value of -0.449 and positive correlation of disp with cyl with a value of 0.902.
+
+We can also obtain the correlation coefficients with the Pearson hypothesis test where the hypothesis we propose is the following:
+
+**H0: variables are NOT correlated**
+**H1: variables are correlated**
+
+Starting from the rcorr function and converting our dataset into an array, we can select the parameters r
+(to obtain the correlation coefficients between pairs of variables) and p (to obtain the pvalue of the Pearson 2 to 2 test)
+
+
+We are going to select all the variables of the mtcars dataset:
+
+```{r}
+
+library(Hmisc)
+
+corrs <- rcorr(as.matrix(mtcars))
+
+corrs$r #pearson r correlation coefficients
+corrs$P #ppearson test value
+
+```
+**At first glance, which pair of variables accept H0? And which ones accept H1?**
+
+hp with gear , with a p-value >0.05 we accept the null hypothesis that our variables are not correlated.
+
+cyl with mpg with a p-value < 0.05 we reject H0, so we accept the alternative hypothesis that the variables cyl and mpg are correlated.
+
+```{r}
+
+corrs$P>0.05
+
+corrs$r>0.7
+
+```
+Response:
+
+
+If we want to study specifically "mpg" with respect to the rest:
+
+```{r}
+
+R<- corrs$r
+R[1,]
+
+```
+
+Another way to do it:
+
+```{r}
+cor(mtcars)
+
+cor(mtcars$mpg, mtcars)
+```
+
+
+In R²
+
+**if we took the variable mpg as the target variable, what would be the "good" predictor variables for mpg?**
+
+Response:
+
+```{r}
+
+cor(mtcars$mpg, mtcars)^2
+
+```
+
+As commented in the didactic unit, the correlation coefficient R only detects linear dependencies.
+
+That is why we paint the variables with low R² to see if we can perform a non-linear transformation of them so that "mpg" is better explained linearly with respect to the respective transformations:
+
+We are going to test different transformations on the variable "hp" in order to see if these transformations show a linear relationship with the variable "mpg".
+
+```{r}
+
+plot(mtcars$mpg, mtcars$wt)
+
+
+str(mtcars)
+
+#look for transformations that improve the correlation of hp
+
+# base case
+cor(mtcars$mpg, mtcars$wt)
+#-0.867
+
+# logarithmic transformation
+cor(mtcars$mpg, log(mtcars$wt))
+#-0.9
+
+# exponential transformation
+cor(mtcars$mpg, exp(mtcars$wt))
+#-0.606
+
+# transformation applying the square root
+cor(mtcars$mpg, sqrt(mtcars$wt))
+#-0.889
+
+
+# transformation by squaring
+cor(mtcars$mpg, (mtcars$wt)^2)
+
+#-0.801
+
+```
+We observe that the logarithmic transformation of hp makes the correlation with mpg go up considerably, we paint this new point cloud:
+
+
+```{r}
+
+plot(mtcars$mpg, log(mtcars$wt))
+
+plot(mtcars$mpg, mtcars$wt)
+
+```
